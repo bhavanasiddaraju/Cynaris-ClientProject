@@ -4,20 +4,35 @@ import pandas as pd
 
 
 class EduTrackRecommender:
-    def __init__(self, artifacts_dir="edutrack_artifacts"):
+    def __init__(self, artifacts_dir="artifacts"):
         self.artifacts_dir = Path(artifacts_dir)
+
+        required_files = [
+            "predicted_scores.csv",
+            "interaction_matrix.csv",
+            "popularity_baseline.csv",
+        ]
+
+        for filename in required_files:
+            if not (self.artifacts_dir / filename).exists():
+                raise FileNotFoundError(
+                    f"Missing artifact: {self.artifacts_dir / filename}. "
+                    "Run python -m src.train first."
+                )
 
         self.scores = pd.read_csv(
             self.artifacts_dir / "predicted_scores.csv",
-            index_col=0
+            index_col=0,
         )
+
         self.interactions = pd.read_csv(
             self.artifacts_dir / "interaction_matrix.csv",
-            index_col=0
+            index_col=0,
         )
+
         self.popularity = pd.read_csv(
             self.artifacts_dir / "popularity_baseline.csv",
-            index_col=0
+            index_col=0,
         ).iloc[:, 0]
 
         self.scores.index = self.scores.index.astype(str)
@@ -54,10 +69,10 @@ class EduTrackRecommender:
         return [
             {
                 "student_id": student_id,
-                "recommended_subject": subject,
-                "predicted_score": round(float(ranked[subject]), 4),
+                "recommended_subject": str(subject),
+                "predicted_score": round(float(score), 4),
                 "confidence_score": round(float(confidence[subject]), 4),
-                "recommendation_method": method
+                "recommendation_method": method,
             }
-            for subject in ranked.index
+            for subject, score in ranked.items()
         ]
